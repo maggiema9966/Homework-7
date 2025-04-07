@@ -1,0 +1,266 @@
+---
+title: "HW 7"
+author: "Maggie Ma"
+date: "2025-04-03"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+library(ggplot2)
+library(tidyverse)
+library(mosaic)
+library(gridExtra)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(MatchIt)
+```
+
+#### Maggie Ma, mm227339, Github Link: <https://github.com/maggiema9966/Homework-7>
+
+# Problem 1
+
+```{r}
+armfold = read.csv('armfold.csv')
+```
+
+### Part A
+
+```{r, results = 'hide'}
+# number of males vs females
+table(armfold$Sex)
+
+# proportion of males with left arm on top
+males_armfold <- filter(armfold, Sex == 'Male')
+prop(males_armfold$LonR_fold == 1)
+
+# proportion of females with left arm on top
+females_armfold <- filter(armfold, Sex == 'Female')
+prop(females_armfold$LonR_fold == 1)
+```
+
+There are 111 female students and 106 male students in this dataset. 47.17% of the males fold their left arm on top, while 42.34% of the females fold their left arm on top.
+
+### Part B
+
+```{r, results = 'hide'}
+diffprop(LonR_fold ~ Sex, data=armfold)
+```
+
+The observed difference in proportions between the genders is 0.04827.
+
+### Part C
+
+```{r, results = 'hide'}
+# R function
+prop.test(LonR_fold ~ Sex, data=armfold)
+
+# Calculation by hand
+pMales = 0.4716981
+pFemales = 0.4234234
+nMales = 106
+nFemales = 111
+
+se = sqrt(((pMales*(1-pMales))/nMales) + ((pFemales*(1-pFemales))/nFemales))
+
+diffProp = 0.04827469
+
+leftbound = diffProp-(1.96*se)
+rightbound = diffProp+(1.96*se)
+```
+
+I used the following formula: $$SE = \sqrt{((pMales*(1-pMales))/nMales) + ((pFemales*(1-pFemales))/nFemales)}$$ where pMales = `r pMales` and pFemales = `r pFemales`. Then, I calculated the left and right bounds of the confidence interval by adding/subtracting z*, which was 1.96 since we are calculating a 95% confidence level. I used a z value of 1.96 because, under a normal distribution, approximately 95% of the sampling distribution falls within 1.96 standard errors of the mean when constructing a 95% confidence interval. The 95% confidence interval for the difference in proportions is -0.0932 to 0.1897. 
+
+### Part D
+
+If we were to find the true difference in proportions of males versus females who fold their left arms on top, then we would expect that there is no significant difference between them, since 0 is in the confidence interval, which tells us that it is possible that there is no significant difference in the proportions between the genders.
+
+### Part E
+
+The standard error calculated, 0.06745634, measures the variability of the sample difference in proportions. It represents how much we would expect the sample proportion difference to vary from the true population difference.
+
+### Part F
+
+In this context, the sampling distribution is the distribution of the difference in proportions of students that fold their left arm on top between males and females that you’d get by repeated random sampling of students from the university population. The arm that is on top is what is varied from sample to sample, and what stays fixed is the true population mean, the sample size, and the sampling method.
+
+### Part G
+
+The Central Limit Theorem justifies using a normal distribution to approximate the sampling distribution of the difference in sample proportions. If the sample size is sufficiently large, then the statistical fluctuations in the difference in proportions can be well approximated by a normal distribution.
+
+### Part H
+
+Although we cannot say definitively, I would agree with their claim. Because 0 is in the confidence interval, that tells us it is possible that there is no significant difference in the proportions between the genders. Therefore, we do not have evidence to reject the null hypothesis that there is no significant difference in the arm on top when folding arms between the genders.
+
+### Part I
+
+Due to random chance, the confidence intervals would be different across different samples. However, at a 95% confidence level, about 95% of all of these confidence intervals should contain the true population difference in proportions.
+
+# Problem 2
+
+```{r}
+turnout = read.csv('turnout.csv')
+```
+
+### Part A
+
+```{r, results = 'hide'}
+# The proportion of those receiving a GOTV call who voted in 1998
+called <- filter(turnout, GOTV_call == 1)
+prop(called$voted1998 == 1)
+
+# The sample proportion of those not receiving a GOTV call who voted in 1998
+notcalled <- filter(turnout, GOTV_call == 0)
+prop(notcalled$voted1998 == 1)
+
+# difference in proportions
+diffprop(voted1998 ~ GOTV_call, data=turnout)
+
+# 95% confidence interval for the difference in these two proportions
+prop.test(voted1998 ~ GOTV_call, data=turnout)
+```
+
+The proportion of those who received a GOTV call and voted in 1998 is 0.6478, and the proportion of those who didn't receive the GOTV call and voted in 1998 is 0.4442 The 95% confidence interval for the difference in proportions is 0.1411399 to 0.2659167. The proportion of people who voted in 1998 was 0.2035 higher among those who received a GOTV call compared to those who did not.
+
+### Part B
+
+#### voted1996
+
+```{r}
+# association with independent variable (whether they got GOTV call)
+mean1996 <- t(as.data.frame(mean(voted1996 ~ GOTV_call, data= turnout)))
+rownames(mean1996) <- "1996 Proportion Voted"
+kable(mean1996, 
+      caption = "Proportion That Voted in 1996 by GOTV Call Status",
+      col.names = c("No Call", "Call"))
+
+# association with dependent variable (whether they voted in 1998)
+mean1996 <- t(as.data.frame(mean(voted1996 ~ voted1998, data= turnout)))
+rownames(mean1996) <- "1996 Proportion Voted"
+kable(mean1996, 
+      caption = "Proportion That Voted in 1996 by Voting Status in 1998",
+      col.names = c("No Vote in 1998", "Vote in 1998"))
+```
+
+```{r, results = 'hide'}
+# confidence interval
+prop.test(GOTV_call ~ voted1996, data = turnout)
+
+# confidence interval
+prop.test(voted1998 ~ voted1996, data = turnout)
+```
+
+The first table shows us that the proportion of people who voted in 1996 was 0.1817 higher among those who received a GOTV call compared to those who did not. This means those who voted in 1996 were more likely to receive a GOTV call. Additionally, the confidence interval is from 0.0106 to 0.0220, which does not include 0, which tells us that the proportions of voting status in 1996 is significantly different and is a confounder for the independent variable (GOTV call). This tells us that voting status in 1996 was associated with getting a GOTV call (the independent variable). The second table shows us that the proportion of people who voted in 1996 was 0.4127 higher among those who voted in the 1998 election compared to those who did not. This means that those who voted in the 1996 election were more likely to vote again in the 1998 election. Additionally, the confidence interval is from 0.3932 to 0.4275, which does not include 0, which tells us that the proportions of voting status in 1996 is significantly different and is a confounder for the dependent variable (voted1998). This tells us that voting in 1996 was associated with voting in 1998 (the dependent variable). Thus, we have concluded that voting status in 1996 is associated with both the independent (GOTV calls) and dependent (voting status in 1998) variables, which means that it is a confounding variable.
+
+#### AGE
+
+```{r}
+# association with independent variable (whether they got GOTV call)
+meanAge <- t(as.data.frame(mean(AGE ~ GOTV_call, data= turnout)))
+rownames(meanAge) <- "Mean Age"
+kable(meanAge, 
+      caption = "Mean Age by GOTV Call Status",
+      col.names = c("No Call", "Call"))
+
+# association with dependent variable (whether they voted in 1998)
+meanAge <- t(as.data.frame(mean(AGE ~ voted1998, data= turnout)))
+rownames(meanAge) <- "Mean Age"
+kable(meanAge, 
+      caption = "Mean Age by Voting Status in 1998",
+      col.names = c("No Vote", "Vote"))
+```
+
+```{r, results = 'hide'}
+# confidence interval
+t.test(AGE ~ GOTV_call, data = turnout)
+
+# confidence interval
+t.test(AGE ~ voted1998, data = turnout)
+```
+
+The first table shows us that the mean age was 8.8824 higher among those who received a GOTV call compared to those who did not. This means older people were more likely to receive a GOTV call. Additionally, the confidence interval is from -11.3951 to -6.3696, which does not include 0, which tells us that the mean age is significantly different and is a confounder for the independent variable (GOTV call). This tells us that age was associated with getting a GOTV call (the independent variable). The second table shows us that the mean age was 10.5013 higher among those who voted in the 1998 election compared to those who did not. This means that older people were more likely to vote in the 1998 election. Additionally, the confidence interval is from -11.1820 to -9.8206, which does not include 0, which tells us that the mean age is significantly different and is a confounder for the dependent variable (voted1998). This tells us that age was associated with voting in 1998 (the dependent variable). Thus, we have concluded that age is associated with both the independent (GOTV calls) and dependent (voting status in 1998) variables, which means that it is a confounding variable.
+
+#### MAJORPTY
+
+```{r}
+# association with independent variable (whether they got GOTV call)
+meanParty <- t(as.data.frame(mean(MAJORPTY ~ GOTV_call, data= turnout)))
+rownames(meanParty) <- "Proportion in Party"
+kable(meanParty, 
+      caption = "Proportion in a Major Party by GOTV Call Status",
+      col.names = c("No Call", "Call"))
+
+# association with dependent variable (whether they voted in 1998)
+meanParty <- t(as.data.frame(mean(MAJORPTY ~ voted1998, data= turnout)))
+rownames(meanParty) <- "Proportion in Party"
+kable(meanParty, 
+      caption = "Proportion in a Major Party by Voting Status in 1998",
+      col.names = c("No Vote", "Vote"))
+```
+
+```{r, results = 'hide'}
+# confidence interval
+prop.test(GOTV_call ~ MAJORPTY, data = turnout)
+
+# confidence interval
+prop.test(voted1998 ~ MAJORPTY, data = turnout)
+```
+
+The first table shows us that the proportion of people associated with a major party was 0.0569 higher among those who received a GOTV call compared to those who did not. This means those who were associated with a major party were more likely to receive a GOTV call. Additionally, the confidence interval is from 0.00046 to 0.0129, which does not include 0, which tells us that the proportion of associations with a major party is significantly different and is a confounder for the independent variable (GOTV call). This tells us that association with a major party was associated with getting a GOTV call (the independent variable). The second table shows us that the proportion of people associated with a major party was 0.1013 higher among those who were associated with a major party compared to those who did not. This means that those who voted in the 1996 election were more likely to vote again in the 1998 election. Additionally, the confidence interval is from 0.1112 to 0.1534, which does not include 0, which tells us that the proportion of associations with a major party is significantly different and is a confounder for the dependent variable (voted1996). This tells us that association with a major party was associated with voting in 1998 (the dependent variable). Thus, we have concluded that association with a major party is associated with both the independent (GOTV calls) and dependent (voting status in 1998) variables, which means that it is a confounding variable.
+
+### Part C
+
+```{r}
+# matching
+turnout_match = matchit(factor(GOTV_call) ~ AGE + factor(voted1996) + factor(MAJORPTY), data = turnout, ratio=5)
+turnout_matched = match.data(turnout_match)
+
+# check confounders are balanced
+meanAge <- t(as.data.frame(mean(AGE ~ GOTV_call, data= turnout_matched)))
+rownames(meanAge) <- "Mean Age"
+kable(meanAge, 
+      caption = "Matched Mean Age by GOTV Call Status",
+      col.names = c("No Call", "Call"))
+
+mean1996 <- t(as.data.frame(mean(voted1996 ~ GOTV_call, data= turnout_matched)))
+rownames(mean1996) <- "1996 Proportion Voted"
+kable(mean1996, 
+      caption = "Matched Proportion That Voted in 1996 by GOTV Call Status",
+      col.names = c("No Call", "Call"))
+
+meanParty <- t(as.data.frame(mean(MAJORPTY ~ GOTV_call, data= turnout_matched)))
+rownames(meanParty) <- "Proportion in Party"
+kable(meanParty, 
+      caption = "Matched Proportion in a Major Party by GOTV Call Status",
+      col.names = c("No Call", "Call"))
+```
+
+```{r, results = 'hide'}
+# check confints for each confounder
+t.test(AGE ~ GOTV_call, data = turnout_matched)
+prop.test(GOTV_call ~ voted1996, data = turnout_matched)
+prop.test(GOTV_call ~ MAJORPTY, data = turnout_matched)
+```
+
+In these tables, we can see that the matched confounding variables are much closer to being balanced. For the AGE confounding variable, the unmatched mean ages for no calls versus calls do not match up (the mean age for those called was \~9 years higher), but the matched mean ages were much more balanced, differing by only 0.041 years. Additionally, the confidence interval is from -2.760374 to 2.677783, which includes 0, which tells us that the mean age is not significantly different and is no longer a confounder. For the voted1996 confounding variable, the unmatched proportion of those who voted in the 1996 election was not balanced (the proportion for those who received a call was 0.1817 higher), but the matched proportions were much more balanced, differing by 0. Additionally, the confidence interval is from -0.04192462 to 0.04192462, which includes 0, which tells us that proportions of voting status in 1996 is not significantly different and is no longer a confounder. Finally, for the MAJORPTY confounding variable, the unmatched proportion of those who were registered under a major party was not balanced (the proportion for those who received a call was 0.0569 higher), but the matched proportions were much more balanced, differing by 0.0057. Additionally, the confidence interval is from  -0.05556967 to 0.04548700, which includes 0, which tells us that proportions of association with a major party is not significantly different and is no longer a confounder. Thus, we have balanced these confounding variables.
+
+```{r, results = 'hide'}
+# Part A Analysis with Matched Data
+# The proportion of those receiving a GOTV call who voted in 1998
+called <- filter(turnout_matched, GOTV_call == 1)
+prop(called$voted1998 == 1)
+
+# The sample proportion of those not receiving a GOTV call who voted in 1998
+notcalled <- filter(turnout_matched, GOTV_call == 0)
+prop(notcalled$voted1998 == 1)
+
+# difference in proportions
+diffprop(voted1998 ~ GOTV_call, data=turnout_matched)
+
+# 95% confidence interval for the difference in these two proportions
+prop.test(voted1998 ~ GOTV_call, data=turnout_matched)
+```
+
+After matching the dataset, the proportion of those who recieved a GOTV call and voted in 1998 is 0.1854, and the proportion of those who didn't receive the GOTV call and voted in 1998 is 0.8146. The 95% confidence interval for the difference in proportions is 0.01045353 to 0.14663149. The proportion of people who voted in 1998 was 0.0785 higher among those who received a GOTV call compared to those who did not. Because 0 is not in the confidence interval, that tells us it is possible that there is a significant difference in the proportion differences between the whether people got a GOTV call. Therefore, we have evidence to reject the null hypothesis that there is no significant difference in voting rates between the whether people got a GOTV call.
